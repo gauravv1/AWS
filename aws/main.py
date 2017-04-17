@@ -5,7 +5,7 @@
 message = '''Welcome to Main Menu:
         1. IAM User Management
         2. EC Instance Management
-        3. S3 Management
+        3. Volume Management
         4. Exit'''
 print(message)
 
@@ -23,10 +23,8 @@ if main_choice == 1:
 elif    main_choice == 2:
         import ec2
 elif    main_choice == 3:
-        delete_user()
+        import volume
 elif    main_choice == 4:
         print("Goodbye")
 else:
         print("Please enter correct choice")
-
-
