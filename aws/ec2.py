@@ -9,10 +9,7 @@ def list_ec2():
         for reservation in response["Reservations"]:
                 for instance in reservation["Instances"]:
                         print("Instance ID is: % s" % instance["InstanceId"])
-                        for i in response["Reservations"]:
-                                for x in i["Instances"]:
-                                        state = (x["State"])
-                                        print("Instance State is: % s" % state['Name'])
+                        print ("Instance State is: % s" %instance["State"]["Name"])
 
 def desc_ec2():
         instance = raw_input("Enter Instance id for which you want to get details:")
