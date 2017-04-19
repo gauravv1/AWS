@@ -113,11 +113,15 @@ def attach():
 def snapshot():
 
         message='''Please select:
-        1. Snapshot for all volumes.
-        2. Snapshot for selected volume.
-        3. Snapshot for running instances.
-        4. Snapshot for all instances.
-        5. Snapshot for selected instance'''
+        1. List snapshots.
+        2. Snapshot for all volumes.
+        3. Snapshot for selected volume.
+        4. Snapshot for running instances.
+        5. Snapshot for all instances.
+        6. Snapshot for selected instance.
+        7. Delete all snapshots.
+        8. Delete selected snapshot.
+        9. Exit'''
 
         print(message)
 
@@ -125,20 +129,78 @@ def snapshot():
 
         while not is_valid :
             try :
-                choice = int(raw_input('Enter your choice[1-5]:'))
+                choice = int(raw_input('Enter your choice[1-7]:'))
                 is_valid = 1
             except ValueError, e :
                 print ("'%s' is not a valid integer." % e.args[0].split(": ")[1])
         if choice == 1:
-            print "Snapshot for all volumes"
-        elif choice == 2:
-            print 'Snapshot for selected volume'
+            snap_list = vol.describe_snapshots(OwnerIds=['510758585567'])
+            print "Volume                Snapshot"
+            for snap in snap_list['Snapshots']:
+                snap_id = snap['SnapshotId']
+                vol_id = snap['VolumeId']
+                print vol_id, snap_id
+        elif choice ==2:
+            a = vol.describe_volumes()
+            for i in a['Volumes']:
+                vol_id = i['VolumeId']
+                desc = "backup-%s" %vol_id
+                vol.create_snapshot(VolumeId=vol_id,Description=desc)
+
+            print "All volume's snapshot has been created."
+
         elif choice == 3:
-            print 'Snapshot for running instances'
+            v = raw_input("Enter Volume Id:")
+            desc = "backup-%s" %v
+            vol.create_snapshot(VolumeId=v,Description=desc)
+            print 'Snapshot for volume %s is created.' %(v)
         elif choice == 4:
-            print 'Snapshot for all instances'
+            response = vol.describe_instances(Filters=[{'Name': 'instance-state-name', 'Values': ['running']}])
+            for reservation in response["Reservations"]:
+                for instance in reservation["Instances"]:
+                        iid = instance['InstanceId']
+                        volume = vol.describe_volumes(Filters=[{'Name': 'attachment.instance-id', 'Values': [iid]}])
+                        for vn in volume['Volumes']:
+                            for attch in vn['Attachments']:
+                                vol_id = attch['VolumeId']
+                                desc = "backup-%s" %vol_id
+                                vol.create_snapshot(VolumeId=vol_id,Description=desc)
+            print "Snapshot created."
         elif choice == 5:
-            print 'Snapshot for selected instances'
+            response = vol.describe_instances()
+            for reservation in response["Reservations"]:
+                for instance in reservation["Instances"]:
+                        iid = instance['InstanceId']
+                        volume = vol.describe_volumes(Filters=[{'Name': 'attachment.instance-id', 'Values': [iid]}])
+                        for vn in volume['Volumes']:
+                            for attch in vn['Attachments']:
+                                vol_id = attch['VolumeId']
+                                desc = "backup-%s" %vol_id
+                                vol.create_snapshot(VolumeId=vol_id,Description=desc)
+
+            print 'Snapshot for all instances created.'
+        elif choice == 6:
+            inst = raw_input("Enter instance ID:")
+            volume = vol.describe_volumes(Filters=[{'Name': 'attachment.instance-id', 'Values': [inst]}])
+            for vn in volume['Volumes']:
+                for attch in vn['Attachments']:
+                    vol_id = attch['VolumeId']
+                    desc = "backup-%s" %vol_id
+                    vol.create_snapshot(VolumeId=vol_id,Description=desc)
+
+            print 'Snapshot for all volumes in %s created'%inst
+        elif choice == 7:
+            snap_list = vol.describe_snapshots(OwnerIds=['510758585567'])
+            for snap in snap_list['Snapshots']:
+                snap_id = snap['SnapshotId']
+                vol.delete_snapshot(SnapshotId=snap_id)
+            print "All snapshots are deleted"
+        elif choice == 8:
+            snap_id = raw_input("Enter snapshot Id:")
+            vol.delete_snapshot(SnapshotId=snap_id)
+            print 'Snapshot %s is deleted' %snap_id
+        elif choice == 9:
+            print "Good Bye!"
         else:
             print "Please enter correct choice."
 ###########Starting volume Menu#################
@@ -149,7 +211,7 @@ message='''Volume Menu:
         2. Create Volume
         3. Delete Volume
         4. Attach or Detach Volume
-        5. Take volume snapshot
+        5. Snapshot management
         6. Exit'''
 
 print(message)
@@ -158,7 +220,7 @@ is_valid = 0
 
 while not is_valid :
         try :
-                main_choice = int ( raw_input('Enter your choice [1-3] : ') )
+                main_choice = int ( raw_input('Enter your choice [1-6] : ') )
                 is_valid = 1 ## set it to 1 to validate input and to terminate the while..not loop
         except ValueError, e :
                 print ("'%s' is not a valid integer." % e.args[0].split(": ")[1])
